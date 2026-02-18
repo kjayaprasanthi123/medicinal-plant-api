@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from plant_app.ml.predictor import PlantPredictor
 from plant_app.medicinal_data import MedicinalData
 
+
 # Initialize FastAPI app
 app = FastAPI(title="Medicinal Plant Identification API")
 
@@ -48,11 +49,24 @@ async def predict_plant(file: UploadFile = File(...)):
         image_bytes = await file.read()
 
         plant_name, confidence = predictor.predict(image_bytes)
+
+        # 🔥 ADD CONFIDENCE THRESHOLD HERE
+        confidence = float(confidence)
+
+        if confidence < 70:   # You can adjust threshold (60–75)
+            return {
+                "plant_name": "Not a Medicinal Plant",
+                "confidence": confidence,
+                "medicinal_uses": [
+                    "Please upload a clear medicinal plant image."
+                ]
+            }
+
         medicinal_uses = MedicinalData.get_uses(plant_name)
 
         return {
             "plant_name": plant_name,
-            "confidence": float(confidence),
+            "confidence": confidence,
             "medicinal_uses": medicinal_uses
         }
 
